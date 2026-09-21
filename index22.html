@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CreatorFlow — YouTube Creator Analytics</title>
+<meta name="description" content="CreatorFlow single-file YouTube creator analytics and campaign management dashboard.">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{
+  --bg:#07111f;--panel:#0d1a2b;--panel2:#102238;--line:#1d314a;--text:#edf5ff;
+  --muted:#8fa6bf;--primary:#5b8cff;--primary2:#7c5cff;--good:#29c98b;--warn:#ffbd59;
+  --bad:#ff647c;--shadow:0 18px 50px rgba(0,0,0,.25);--radius:18px
+}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}button{cursor:pointer}
+a{color:inherit;text-decoration:none}
+.app{display:flex;min-height:100vh}.sidebar{width:265px;background:#081522;border-right:1px solid var(--line);padding:18px;position:fixed;inset:0 auto 0 0;overflow:auto;z-index:20}
+.brand{display:flex;gap:10px;align-items:center;padding:8px 5px 20px;font-weight:800;font-size:20px}.brandmark{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--primary2));display:grid;place-items:center;box-shadow:0 10px 30px #4f6cff33}
+.navtitle{font-size:11px;color:#627d98;text-transform:uppercase;letter-spacing:.12em;margin:18px 8px 8px}.nav{display:grid;gap:5px}.nav button{border:0;background:transparent;color:#9db1c8;text-align:left;padding:11px 12px;border-radius:11px;display:flex;gap:10px;align-items:center}.nav button:hover,.nav button.active{background:#12253c;color:#fff}.nav .dot{width:7px;height:7px;border-radius:50%;background:#45627e}.nav button.active .dot{background:var(--primary)}
+.main{margin-left:265px;flex:1;min-width:0}.topbar{height:72px;border-bottom:1px solid var(--line);background:#081522dd;backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:10}.topbar-left{display:flex;gap:12px;align-items:center}.menu{display:none;border:1px solid var(--line);background:var(--panel);color:#fff;border-radius:10px;padding:8px}.content{padding:28px;max-width:1600px;margin:auto}
+.page{display:none}.page.active{display:block}.title{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:24px}.title h1{margin:0 0 7px;font-size:28px}.title p{margin:0;color:var(--muted)}.actions{display:flex;gap:9px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:#122238;color:#eaf3ff;padding:10px 14px;border-radius:11px}.btn:hover{border-color:#38587c}.btn.primary{border:0;background:linear-gradient(135deg,var(--primary),var(--primary2));box-shadow:0 8px 25px #526fff33}.btn.good{border:0;background:#159b6b}.btn.danger{border-color:#6b2d3a;color:#ff9aaa}.btn.small{padding:7px 10px;font-size:12px}
+.grid{display:grid;gap:16px}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.card{background:linear-gradient(180deg,#0e1d30,#0b1828);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}.metric{min-height:132px}.metric .label{font-size:13px;color:var(--muted)}.metric .value{font-size:27px;font-weight:800;margin-top:14px}.metric .sub{font-size:12px;color:#6f89a4;margin-top:7px}.status{display:inline-flex;gap:7px;align-items:center;padding:6px 9px;border-radius:99px;background:#17283b;color:#a9bed4;font-size:12px}.status .s{width:7px;height:7px;border-radius:50%;background:#8094a9}.status.good{background:#0e2b24;color:#65e1b0}.status.good .s{background:var(--good)}.status.warn{background:#312713;color:#ffd18a}.status.warn .s{background:var(--warn)}
+.tablewrap{overflow:auto}.table{width:100%;border-collapse:collapse}.table th,.table td{padding:13px 12px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}.table th{font-size:12px;color:#7e97b1;text-transform:uppercase}.table td{font-size:13px}.muted{color:var(--muted)}.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed #29415d;border-radius:14px}
+.form{display:grid;gap:12px}.field{display:grid;gap:7px}.field label{font-size:12px;color:#8ea7c1}.field input,.field select,.field textarea{width:100%;border:1px solid #28415e;background:#091727;color:#fff;border-radius:11px;padding:11px 12px;outline:0}.field input:focus,.field select:focus,.field textarea:focus{border-color:#5279b4}
+.bar{height:9px;border-radius:99px;background:#14273c;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--primary),var(--primary2));border-radius:99px}
+.kpis{display:flex;gap:18px;flex-wrap:wrap}.kpi{padding-right:20px;border-right:1px solid var(--line)}.kpi:last-child{border:0}.kpi b{display:block;font-size:20px}.kpi span{font-size:12px;color:var(--muted)}
+.chart{height:230px;display:flex;align-items:end;gap:7px;padding:15px 5px 5px}.col{flex:1;min-width:6px;border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,#7198ff,#684cff);opacity:.85}.chartlabels{display:flex;justify-content:space-between;color:#627d98;font-size:10px}
+.plan{position:relative}.plan.recommended{border-color:#526fff}.ribbon{position:absolute;right:15px;top:15px;font-size:10px;background:#526fff;padding:5px 8px;border-radius:8px}.price{font-size:32px;font-weight:800;margin:14px 0}.plan ul{padding-left:18px;color:#a9bad0;line-height:1.9}.plan li::marker{color:#628cff}
+.notice{padding:13px 14px;border:1px solid #28415e;border-radius:12px;background:#0b1b2d;color:#a9bed4;font-size:13px;line-height:1.5}.notice.warn{border-color:#5c4724;background:#201a0d}.notice.good{border-color:#20533e;background:#0c211a}
+.auth{min-height:100vh;display:grid;place-items:center;padding:20px;background:radial-gradient(circle at 20% 10%,#24417b55,transparent 35%),radial-gradient(circle at 80% 90%,#6d3b8b44,transparent 35%),var(--bg)}.authbox{width:min(470px,100%);background:#0b1929;border:1px solid var(--line);border-radius:24px;padding:28px;box-shadow:var(--shadow)}.authbox h1{margin:0}.authbox .brand{padding-bottom:12px}.switch{text-align:center;color:var(--muted);font-size:13px;margin-top:15px}.link{color:#78a1ff;cursor:pointer}.hidden{display:none!important}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#5b8cff,#7c5cff);display:grid;place-items:center;font-weight:800;overflow:hidden}.avatar img{width:100%;height:100%;object-fit:cover}.profile{display:flex;align-items:center;gap:10px}.profile small{display:block;color:var(--muted)}
+.toast{position:fixed;right:20px;bottom:20px;z-index:100;padding:12px 15px;background:#10253b;border:1px solid #315073;border-radius:12px;box-shadow:var(--shadow);display:none;max-width:360px}.toast.show{display:block}
+.modal{position:fixed;inset:0;background:#0009;display:none;place-items:center;z-index:80;padding:20px}.modal.show{display:grid}.modalbox{width:min(600px,100%);background:#0c1b2c;border:1px solid var(--line);border-radius:18px;padding:20px}
+.mobile-backdrop{display:none}
+footer{padding:28px 0;color:#5f7891;font-size:12px;text-align:center}
+@media(max-width:1100px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:800px){.sidebar{transform:translateX(-100%);transition:.2s}.sidebar.open{transform:none}.main{margin-left:0}.menu{display:block}.mobile-backdrop{position:fixed;inset:0;background:#0008;z-index:15}.mobile-backdrop.show{display:block}.content{padding:20px}.g4,.g3,.g2{grid-template-columns:1fr}.title{flex-direction:column}.topbar{padding:0 15px}}
+</style>
+</head>
+<body>
+
+<div id="auth" class="auth">
+  <div class="authbox">
+    <div class="brand"><div class="brandmark">CF</div><div>CreatorFlow</div></div>
+    <div id="loginForm">
+      <h1>Welcome back</h1><p class="muted">Creator analytics dashboard</p><br>
+      <form class="form" onsubmit="authLogin(event)">
+        <div class="field"><label>Email</label><input id="loginEmail" type="email" required placeholder="you@example.com"></div>
+        <div class="field"><label>Password</label><input id="loginPassword" type="password" required placeholder="••••••••"></div>
+        <button class="btn primary" type="submit">Login</button>
+      </form>
+      <div style="height:10px"></div>
+      <button class="btn" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px" onclick="connectGoogle()">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.7-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12 0 14.5s.7 4.8 1.9 7.2l3.7-2.9z"/><path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 16.9C3.7 20.6 7.5 23.5 12 23.5z"/></svg>
+        Continue with Google / YouTube
+      </button>
+      <div class="switch">No account? <span class="link" onclick="showRegister()">Create account</span></div>
+    </div>
+    <div id="registerForm" class="hidden">
+      <h1>Create account</h1><p class="muted">Start with a local account. Connect YouTube after login.</p><br>
+      <form class="form" onsubmit="authRegister(event)">
+        <div class="field"><label>Name</label><input id="regName" required placeholder="Your name"></div>
+        <div class="field"><label>Email</label><input id="regEmail" type="email" required placeholder="you@example.com"></div>
+        <div class="field"><label>Password</label><input id="regPassword" type="password" minlength="6" required placeholder="Minimum 6 characters"></div>
+        <button class="btn primary" type="submit">Register</button>
+      </form>
+      <div class="switch">Already registered? <span class="link" onclick="showLogin()">Login</span></div>
+    </div>
+    <div class="notice" style="margin-top:18px">Google OAuth 2.0 Client Flow integrated directly via Google Identity Services.</div>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+  <aside id="sidebar" class="sidebar">
+    <div class="brand"><div class="brandmark">CF</div><div>CreatorFlow</div></div>
+    <div class="navtitle">Customer</div>
+    <div class="nav">
+      <button data-page="dashboard"><span class="dot"></span>Dashboard</button>
+      <button data-page="analytics"><span class="dot"></span>Analytics</button>
+      <button data-page="videos"><span class="dot"></span>Videos</button>
+      <button data-page="watchtime"><span class="dot"></span>Watch Time</button>
+      <button data-page="subscribers"><span class="dot"></span>Subscribers</button>
+      <button data-page="engagement"><span class="dot"></span>Engagement</button>
+      <button data-page="channel"><span class="dot"></span>Channel</button>
+      <button data-page="connect"><span class="dot"></span>Connect YouTube</button>
+      <button data-page="preview"><span class="dot"></span>50+ Screen Preview</button>
+      <button data-page="campaigns"><span class="dot"></span>Campaigns</button>
+      <button data-page="campaignAnalytics"><span class="dot"></span>Campaign Analytics</button>
+      <button data-page="reports"><span class="dot"></span>Reports</button>
+      <button data-page="plans"><span class="dot"></span>Plans & Billing</button>
+    </div>
+    <div class="navtitle">Account</div>
+    <div class="nav">
+      <button data-page="settings"><span class="dot"></span>Settings</button>
+      <button data-page="notifications"><span class="dot"></span>Notifications</button>
+      <button data-page="activity"><span class="dot"></span>Activity Log</button>
+      <button data-page="help"><span class="dot"></span>Help & Support</button>
+    </div>
+    <div class="navtitle">Admin</div>
+    <div class="nav">
+      <button data-page="admin"><span class="dot"></span>Admin Dashboard</button>
+      <button data-page="customers"><span class="dot"></span>Customers</button>
+      <button data-page="users"><span class="dot"></span>Users & Roles</button>
+      <button data-page="backend"><span class="dot"></span>Backend / API</button>
+    </div>
+    <div style="margin-top:20px" class="notice">Direct YouTube Data API v3 integration active.</div>
+  </aside>
+  <div id="backdrop" class="mobile-backdrop" onclick="toggleSidebar(false)"></div>
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-left"><button class="menu" onclick="toggleSidebar()">☰</button><span id="pageCrumb" class="muted">Dashboard</span></div>
+      <div class="profile"><div><b id="topName">User</b><small id="topPlan">Basic</small></div><div class="avatar" id="avatar">U</div><button class="btn small" onclick="logout()">Logout</button></div>
+    </header>
+    <section class="content">
+
+      <div id="page-dashboard" class="page active">
+        <div class="title"><div><h1>Dashboard</h1><p>Your YouTube performance overview.</p></div><div class="actions"><button class="btn" onclick="loadRealData()">↻ Refresh</button><button class="btn primary" onclick="connectGoogle()">Connect YouTube</button></div></div>
+        <div class="grid g4">
+          <div class="card metric"><div class="label">Total Views</div><div id="mViews" class="value">—</div><div class="sub">Lifetime channel views</div></div>
+          <div class="card metric"><div class="label">Total Videos</div><div id="mWatch" class="value">—</div><div class="sub">Uploaded public videos</div></div>
+          <div class="card metric"><div class="label">Subscribers</div><div id="mSubs" class="value">—</div><div class="sub">Current channel total</div></div>
+          <div class="card metric"><div class="label">Total Video Likes</div><div id="mLikes" class="value">—</div><div class="sub">Across recent uploads</div></div>
+        </div>
+        <br>
+        <div class="grid g2">
+          <div class="card"><h3>Recent Performance</h3><p class="muted">Live analytics data fetched directly from YouTube Data API.</p><div id="chart" class="chart"><div class="empty" style="width:100%">Connect YouTube to view stats</div></div></div>
+          <div class="card"><h3>Connection Status</h3><div id="connectionStatus" class="status"><span class="s"></span>Not connected</div><br><br><div class="notice">Connected through Google Identity Services OAuth 2.0 flow.</div></div>
+        </div>
+      </div>
+
+      <div id="page-analytics" class="page">
+        <div class="title"><div><h1>Analytics</h1><p>YouTube Data API channel stats.</p></div><button class="btn" onclick="loadRealData()">Refresh</button></div>
+        <div class="card"><div class="kpis"><div class="kpi"><b id="aViews">—</b><span>Lifetime Views</span></div><div class="kpi"><b id="aWatch">—</b><span>Total Videos</span></div><div class="kpi"><b id="aGain">—</b><span>Subscribers</span></div><div class="kpi"><b id="aAvg">—</b><span>Avg Views/Video</span></div></div></div>
+      </div>
+
+      <div id="page-videos" class="page">
+        <div class="title"><div><h1>Videos</h1><p>Recent videos from your connected channel.</p></div><button class="btn" onclick="loadRealData()">Refresh</button></div>
+        <div class="card tablewrap"><table class="table"><thead><tr><th>Video</th><th>Published</th><th>Views</th><th>Likes</th><th>Comments</th></tr></thead><tbody id="videosBody"><tr><td colspan="5"><div class="empty">Connect YouTube to load real videos.</div></td></tr></tbody></table></div>
+      </div>
+
+      <div id="page-watchtime" class="page">
+        <div class="title"><div><h1>Channel Counts</h1><p>Direct channel metric counts.</p></div></div>
+        <div class="grid g3"><div class="card metric"><div class="label">Total Videos</div><div id="wMinutes" class="value">—</div></div><div class="card metric"><div class="label">Channel Views</div><div id="wAvg" class="value">—</div></div></div>
+      </div>
+
+      <div id="page-subscribers" class="page">
+        <div class="title"><div><h1>Subscribers</h1><p>Channel subscriber information returned by YouTube.</p></div></div>
+        <div class="grid g2"><div class="card metric"><div class="label">Current subscribers</div><div id="sCurrent" class="value">—</div></div></div>
+      </div>
+
+      <div id="page-engagement" class="page">
+        <div class="title"><div><h1>Engagement</h1><p>Total engagement across recent uploads.</p></div></div>
+        <div class="grid g3"><div class="card metric"><div class="label">Likes</div><div id="eLikes" class="value">—</div></div><div class="card metric"><div class="label">Comments</div><div id="eComments" class="value">—</div></div></div>
+      </div>
+
+      <div id="page-channel" class="page">
+        <div class="title"><div><h1>Channel</h1><p>Connected channel profile and status.</p></div></div>
+        <div class="card"><div id="channelBox" class="empty">No YouTube channel connected.</div></div>
+      </div>
+
+      <div id="page-connect" class="page">
+        <div class="title"><div><h1>Connect YouTube</h1><p>Authorize using Google OAuth 2.0.</p></div></div>
+        <div class="grid g2">
+          <div class="card">
+            <h3>Google Client Authorization</h3>
+            <p class="muted">Uses client-side OAuth via your configured Google Client ID.</p>
+            <button class="btn primary" onclick="connectGoogle()">Authorize & Sync YouTube</button>
+            <br><br>
+            <div class="notice good">Client ID configured: <code>462423898604-83squptk1v9d0sqibsll...</code></div>
+          </div>
+          <div class="card">
+            <h3>Origin Notice</h3>
+            <p class="muted">Make sure the URL where you run this file (e.g. <code>http://localhost:5500</code> or your live domain) is added under <strong>Authorized JavaScript origins</strong> in your Google Cloud Console.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-preview" class="page">
+        <div class="title">
+          <div>
+            <h1>50+ Screen YouTube Preview</h1>
+            <p>Paste a YouTube link to preview your video across a multi-screen monitoring wall.</p>
+          </div>
+          <div class="actions">
+            <button class="btn" onclick="clearPreview()">Clear</button>
+            <button class="btn primary" onclick="loadPreviewVideo()">Load Video</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="field">
+            <label>YouTube Video URL</label>
+            <input id="previewUrl" type="url" placeholder="https://www.youtube.com/watch?v=VIDEO_ID">
+          </div>
+        </div>
+        <br>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+            <div>
+              <h3 style="margin:0">Screen Wall</h3>
+              <p class="muted" style="margin:5px 0">Independent preview tiles</p>
+            </div>
+            <div class="actions">
+              <button class="btn small" onclick="setPreviewCount(25)">25</button>
+              <button class="btn small" onclick="setPreviewCount(50)">50</button>
+              <button class="btn small" onclick="setPreviewCount(75)">75</button>
+            </div>
+          </div>
+          <br>
+          <div id="screenWall" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"></div>
+        </div>
+      </div>
+
+      <div id="page-campaigns" class="page">
+        <div class="title"><div><h1>Campaigns</h1><p>Track promotion campaigns and outcomes.</p></div><button class="btn primary" onclick="openCampaign()">+ New campaign</button></div>
+        <div id="campaignList" class="grid g2"></div>
+      </div>
+
+      <div id="page-campaignAnalytics" class="page">
+        <div class="title"><div><h1>Campaign Analytics</h1></div></div>
+        <div class="card"><div id="campaignStats" class="grid g3"></div></div>
+      </div>
+
+      <div id="page-reports" class="page">
+        <div class="title"><div><h1>Reports</h1></div><div class="actions"><button class="btn" onclick="exportReport()">Export JSON</button><button class="btn" onclick="window.print()">Print</button></div></div>
+        <div class="card"><pre id="reportPreview" style="white-space:pre-wrap;color:#a9bed4">No connected data.</pre></div>
+      </div>
+
+      <div id="page-plans" class="page">
+        <div class="title"><div><h1>Plans & Billing</h1></div></div>
+        <div class="grid g3" id="plansGrid"></div>
+      </div>
+
+      <div id="page-settings" class="page">
+        <div class="title"><div><h1>Settings</h1></div></div>
+        <div class="card form">
+          <div class="field"><label>Display name</label><input id="setName"></div>
+          <button class="btn primary" onclick="saveSettings()">Save settings</button>
+        </div>
+      </div>
+
+      <div id="page-notifications" class="page">
+        <div class="title"><div><h1>Notifications</h1></div></div>
+        <div id="notificationsList" class="grid"></div>
+      </div>
+
+      <div id="page-activity" class="page">
+        <div class="title"><div><h1>Activity Log</h1></div><button class="btn danger" onclick="clearActivity()">Clear</button></div>
+        <div class="card tablewrap"><table class="table"><thead><tr><th>Time</th><th>Action</th><th>Details</th></tr></thead><tbody id="activityBody"></tbody></table></div>
+      </div>
+
+      <div id="page-help" class="page">
+        <div class="title"><div><h1>Help & Support</h1></div></div>
+        <div class="card"><h3>Direct API Setup</h3><p class="muted">Click 'Continue with Google / YouTube' to authenticate and view your statistics directly.</p></div>
+      </div>
+
+      <div id="page-admin" class="page">
+        <div class="title"><div><h1>Admin Dashboard</h1></div></div>
+        <div class="grid g4"><div class="card metric"><div class="label">Local users</div><div id="adminUsers" class="value">0</div></div><div class="card metric"><div class="label">Campaigns</div><div id="adminCampaigns" class="value">0</div></div><div class="card metric"><div class="label">Connected users</div><div id="adminConnected" class="value">0</div></div></div>
+      </div>
+
+      <div id="page-customers" class="page">
+        <div class="title"><div><h1>Customers</h1></div></div>
+        <div class="card tablewrap"><table class="table"><thead><tr><th>Name</th><th>Email</th><th>Plan</th><th>Role</th><th>Created</th></tr></thead><tbody id="customersBody"></tbody></table></div>
+      </div>
+
+      <div id="page-users" class="page">
+        <div class="title"><div><h1>Users & Roles</h1></div></div>
+        <div class="card"><div id="rolesList"></div></div>
+      </div>
+
+      <div id="page-backend" class="page">
+        <div class="title"><div><h1>API Status</h1></div></div>
+        <div class="card"><h3>Client Flow</h3><p class="muted">Running via direct Google Identity Services client-side OAuth.</p></div>
+      </div>
+
+      <footer>CreatorFlow single-file frontend • Real YouTube data integration</footer>
+    </section>
+  </main>
+</div>
+
+<div id="campaignModal" class="modal">
+  <div class="modalbox">
+    <div class="title"><div><h2 style="margin:0">New Campaign</h2></div><button class="btn" onclick="closeCampaign()">✕</button></div>
+    <form class="form" onsubmit="saveCampaign(event)">
+      <div class="field"><label>Campaign name</label><input id="cName" required></div>
+      <div class="field"><label>Video URL</label><input id="cUrl" type="url" required placeholder="https://youtube.com/watch?v=..."></div>
+      <div class="field"><label>Budget (optional)</label><input id="cBudget" type="number" min="0" step="1"></div>
+      <div class="field"><label>Status</label><select id="cStatus"><option>Draft</option><option>Active</option><option>Paused</option><option>Completed</option></select></div>
+      <button class="btn primary">Save campaign</button>
+    </form>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+const CLIENT_ID = '462423898604-83squptk1v9d0sqibsll6300pm1n9hok.apps.googleusercontent.com';
+const SCOPES = 'https://www.googleapis.com/auth/youtube.readonly';
+
+let tokenClient = null;
+let accessToken = localStorage.getItem('cf_yt_token') || null;
+
+const CONFIG = {
+  plans: [
+    {id:'basic',name:'Basic',price:499,desc:'For individual creators',features:['Dashboard','Channel stats','Video analytics','Campaign tracking']},
+    {id:'growth',name:'Growth',price:999,desc:'For growing channels',features:['Everything in Basic','Advanced analytics','Reports','Priority support'],recommended:true},
+    {id:'pro',name:'Pro',price:1999,desc:'For teams & agencies',features:['Everything in Growth','Multi-customer backend','Admin controls','Custom integrations']}
+  ]
+};
+
+let state = {
+  user:null, youtube:null, campaigns:[], notifications:[], activity:[], page:'dashboard'
+};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const fmt = n => n === null || n === undefined || n === '' ? '—' : Number(n).toLocaleString('en-IN');
+
+function toast(msg){$('toast').textContent=msg;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),3200)}
+function logAction(action,details=''){state.activity.unshift({time:new Date().toISOString(),action,details});state.activity=state.activity.slice(0,200);saveState()}
+function saveState(){localStorage.setItem('cf_state',JSON.stringify(state))}
+function loadState(){try{const x=JSON.parse(localStorage.getItem('cf_state')||'{}');state={...state,...x}}catch(e){}}
+function getUsers(){try{return JSON.parse(localStorage.getItem('cf_users')||'[]')}catch(e){return[]}}
+function setUsers(u){localStorage.setItem('cf_users',JSON.stringify(u))}
+
+function showLogin(){$('loginForm').classList.remove('hidden');$('registerForm').classList.add('hidden')}
+function showRegister(){$('registerForm').classList.remove('hidden');$('loginForm').classList.add('hidden')}
+
+function authRegister(e){
+  e.preventDefault();
+  const name=$('regName').value.trim(),email=$('regEmail').value.trim().toLowerCase(),password=$('regPassword').value;
+  const users=getUsers();
+  if(users.some(u=>u.email===email)) return toast('Email already registered.');
+  const user={id:crypto.randomUUID(),name,email,password,role:'customer',plan:'basic',createdAt:new Date().toISOString()};
+  users.push(user);setUsers(users);state.user={...user,password:undefined};saveState();logAction('Registered','Local account created');enterApp();toast('Account created.');
+}
+function authLogin(e){
+  e.preventDefault();
+  const email=$('loginEmail').value.trim().toLowerCase(),password=$('loginPassword').value;
+  const u=getUsers().find(x=>x.email===email&&x.password===password);
+  if(!u)return toast('Invalid email or password.');
+  state.user={...u,password:undefined};saveState();logAction('Login','Local account login');enterApp();
+}
+function logout(){
+  logAction('Logout');
+  localStorage.removeItem('cf_yt_token');
+  accessToken = null;
+  state.user=null;
+  state.youtube=null;
+  saveState();
+  location.reload();
+}
+
+function initGoogleAuth(){
+  if(window.google && window.google.accounts && window.google.accounts.oauth2){
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: async (resp) => {
+        if(resp.error){
+          toast('Google Auth Error: ' + resp.error);
+          return;
+        }
+        accessToken = resp.access_token;
+        localStorage.setItem('cf_yt_token', accessToken);
+        toast('Google Account Connected!');
+        await loadRealData();
+      }
+    });
+  }
+}
+
+window.addEventListener('load', () => {
+  let timer = setInterval(() => {
+    if(window.google && window.google.accounts && window.google.accounts.oauth2){
+      initGoogleAuth();
+      clearInterval(timer);
+    }
+  }, 200);
+});
+
+function connectGoogle(){
+  if(!tokenClient){
+    initGoogleAuth();
+  }
+  if(tokenClient){
+    tokenClient.requestAccessToken({prompt: ''});
+  } else {
+    toast('Google API loading, please retry in a moment...');
+  }
+}
+
+async function fetchYouTubeData(token){
+  const chRes = await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails&mine=true', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  if(!chRes.ok) throw new Error('Channel fetch failed: ' + chRes.status);
+  const chData = await chRes.json();
+  if(!chData.items || !chData.items.length) throw new Error('No YouTube channel associated with this account.');
+
+  const item = chData.items[0];
+  const uploadsPlaylistId = item.contentDetails?.relatedPlaylists?.uploads;
+
+  let videos = [];
+  if(uploadsPlaylistId){
+    const plRes = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&maxResults=10&playlistId=${uploadsPlaylistId}`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if(plRes.ok){
+      const plData = await plRes.json();
+      const videoIds = plData.items.map(i => i.contentDetails.videoId).filter(Boolean).join(',');
+      if(videoIds){
+        const vRes = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoIds}`, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if(vRes.ok){
+          const vData = await vRes.json();
+          videos = vData.items.map(v => ({
+            id: v.id,
+            title: v.snippet.title,
+            publishedAt: v.snippet.publishedAt ? new Date(v.snippet.publishedAt).toLocaleDateString() : '—',
+            viewCount: v.statistics.viewCount || 0,
+            likeCount: v.statistics.likeCount || 0,
+            commentCount: v.statistics.commentCount || 0
+          }));
+        }
+      }
+    }
+  }
+
+  return {
+    channel: {
+      title: item.snippet.title,
+      avatar: item.snippet.thumbnails?.default?.url,
+      subscriberCount: item.statistics.subscriberCount,
+      viewCount: item.statistics.viewCount,
+      videoCount: item.statistics.videoCount
+    },
+    videos: videos
+  };
+}
+
+async function loadRealData(){
+  if(!accessToken){
+    setConnection(false, 'Not connected');
+    return;
+  }
+  try {
+    toast('Fetching YouTube channel data...');
+    const data = await fetchYouTubeData(accessToken);
+    state.youtube = data;
+    if(!state.user){
+      state.user = {
+        id: 'google-user',
+        name: data.channel.title,
+        avatar: data.channel.avatar,
+        role: 'creator',
+        plan: 'growth'
+      };
+      enterApp();
+    }
+    saveState();
+    applyYoutubeData();
+    setConnection(true, 'Connected to ' + data.channel.title);
+    logAction('YouTube Sync', 'Direct API data updated');
+    toast('YouTube sync successful!');
+  } catch(e) {
+    if(e.message && e.message.includes('401')){
+      localStorage.removeItem('cf_yt_token');
+      accessToken = null;
+      setConnection(false, 'Token expired');
+      toast('Session expired. Please click Connect YouTube again.');
+    } else {
+      setConnection(false, 'Error fetching data');
+      toast(e.message);
+    }
+  }
+}
+
+function setConnection(ok,text){
+  const el=$('connectionStatus');
+  if(!el)return;
+  el.className='status '+(ok?'good':'warn');
+  el.innerHTML='<span class="s"></span>'+esc(text);
+}
+
+function applyYoutubeData(){
+  const d=state.youtube;
+  if(!d || !d.channel) return;
+  const ch = d.channel;
+  const vids = d.videos || [];
+
+  const totalLikes = vids.reduce((acc, v) => acc + Number(v.likeCount || 0), 0);
+  const totalComments = vids.reduce((acc, v) => acc + Number(v.commentCount || 0), 0);
+  const avgViews = vids.length ? Math.round(vids.reduce((acc, v) => acc + Number(v.viewCount || 0), 0) / vids.length) : 0;
+
+  $('mViews').textContent = fmt(ch.viewCount);$('mWatch').textContent = fmt(ch.videoCount);
+  $('mSubs').textContent = fmt(ch.subscriberCount);$('mLikes').textContent = fmt(totalLikes);
+
+  $('aViews').textContent = fmt(ch.viewCount);$('aWatch').textContent = fmt(ch.videoCount);
+  $('aGain').textContent = fmt(ch.subscriberCount);$('aAvg').textContent = fmt(avgViews);
+
+  $('wMinutes').textContent = fmt(ch.videoCount);$('wAvg').textContent = fmt(ch.viewCount);
+
+  $('sCurrent').textContent = fmt(ch.subscriberCount);
+
+  $('eLikes').textContent = fmt(totalLikes);$('eComments').textContent = fmt(totalComments);
+
+  $('channelBox').innerHTML = `
+    <div style="display:flex;gap:15px;align-items:center">
+      <div class="avatar">${ch.avatar ? `<img src="${esc(ch.avatar)}"/>` : esc((ch.title||'C').slice(0,1))}</div>
+      <div>
+        <h3 style="margin:0">${esc(ch.title)}</h3>
+        <p class="muted" style="margin:5px 0">Subscribers: ${fmt(ch.subscriberCount)} • Views: ${fmt(ch.viewCount)} • Videos: ${fmt(ch.videoCount)}</p>
+      </div>
+    </div>
+  `;
+
+  $('videosBody').innerHTML = vids.length ? vids.map(v => `
+    <tr>
+      <td>${esc(v.title)}</td>
+      <td>${esc(v.publishedAt)}</td>
+      <td>${fmt(v.viewCount)}</td>
+      <td>${fmt(v.likeCount)}</td>
+      <td>${fmt(v.commentCount)}</td>
+    </tr>
+  `).join('') : '<tr><td colspan="5"><div class="empty">No recent public videos found.</div></td></tr>';
+
+  if($('chart')){$('chart').innerHTML = vids.slice(0, 7).map(v => {
+      const h = Math.min(100, Math.max(15, Math.round((v.viewCount / (vids[0].viewCount || 1)) * 100)));
+      return `<div class="col" style="height:${h}%;" title="${esc(v.title)}: ${fmt(v.viewCount)} views"></div>`;
+    }).join('') || '<div class="empty" style="width:100%">No chart data</div>';
+  }
+
+  renderReport();
+}
+
+function enterApp(){
+  $('auth').classList.add('hidden');
+  $('app').classList.remove('hidden');$('topName').textContent=state.user?.name||'User';
+  $('topPlan').textContent=(state.user?.plan||'basic').toUpperCase();
+  if(state.user?.avatar){
+    $('avatar').innerHTML = `<img src="${esc(state.user.avatar)}"/>`;
+  } else {
+    $('avatar').textContent=(state.user?.name||'U').slice(0,1).toUpperCase();
+  }
+  renderAll();
+  go(state.page||'dashboard');
+  if(state.youtube) applyYoutubeData();
+  else if(accessToken) loadRealData();
+}
+
+function toggleSidebar(force){const open=force===undefined?!$('sidebar').classList.contains('open'):force;$('sidebar').classList.toggle('open',open);$('backdrop').classList.toggle('show',open)}
+
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>{go(b.dataset.page);toggleSidebar(false)}));
+function go(page){
+  state.page=page;saveState();
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const p=$('page-'+page);if(p)p.classList.add('active');
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
+  $('pageCrumb').textContent=page.replace(/([A-Z])/g,' $1').replace(/^./,x=>x.toUpperCase());
+  renderPage(page);
+}
+
+function renderPage(page){
+  if(page==='campaigns')renderCampaigns();
+  if(page==='campaignAnalytics')renderCampaignStats();
+  if(page==='plans')renderPlans();
+  if(page==='activity')renderActivity();
+  if(page==='notifications')renderNotifications();
+  if(page==='customers')renderCustomers();
+  if(page==='users')renderUsers();
+  if(page==='admin')renderAdmin();
+  if(page==='reports')renderReport();
+  if(page==='settings'){ $('setName').value=state.user?.name||''; }
+}
+function renderAll(){renderPlans();renderCampaigns();renderActivity();renderNotifications();renderCustomers();renderUsers();renderAdmin();}
+
+function saveSettings(){
+  state.user.name=$('setName').value.trim()||state.user.name;
+  const users=getUsers();const i=users.findIndex(u=>u.id===state.user.id);if(i>=0)users[i].name=state.user.name;setUsers(users);
+  saveState();$('topName').textContent=state.user.name;logAction('Settings updated');toast('Settings saved.')
+}
+
+function openCampaign(){$('campaignModal').classList.add('show')}
+function closeCampaign(){$('campaignModal').classList.remove('show')}
+function saveCampaign(e){
+  e.preventDefault();
+  const c={id:crypto.randomUUID(),name:$('cName').value.trim(),url:$('cUrl').value.trim(),budget:Number($('cBudget').value\vert{}\vert{}0),status:$('cStatus').value,createdAt:new Date().toISOString(),userId:state.user.id};
+  state.campaigns.unshift(c);saveState();closeCampaign();e.target.reset();renderCampaigns();renderCampaignStats();logAction('Campaign created',c.name);toast('Campaign saved.');
+}
+function renderCampaigns(){
+  const list=$('campaignList');if(!list)return;
+  const cs=state.campaigns.filter(c=>c.userId===state.user?.id);
+  list.innerHTML=cs.length?cs.map(c=>`<div class="card"><div style="display:flex;justify-content:space-between;gap:10px"><h3 style="margin:0">${esc(c.name)}</h3><span class="status"><span class="s"></span>${esc(c.status)}</span></div><p class="muted">${esc(c.url)}</p><div class="kpis"><div class="kpi"><b>₹${fmt(c.budget)}</b><span>Budget</span></div><div class="kpi"><b>${new Date(c.createdAt).toLocaleDateString('en-IN')}</b><span>Created</span></div></div></div>`).join(''):'<div class="card"><div class="empty">No campaigns yet.</div></div>';
+}
+function renderCampaignStats(){
+  const cs=state.campaigns.filter(c=>c.userId===state.user?.id),active=cs.filter(c=>c.status==='Active').length,budget=cs.reduce((s,c)=>s+(c.budget||0),0);
+  $('campaignStats').innerHTML=`<div class="card metric"><div class="label">Campaigns</div><div class="value">${cs.length}</div></div><div class="card metric"><div class="label">Active</div><div class="value">${active}</div></div><div class="card metric"><div class="label">Tracked budget</div><div class="value">₹${fmt(budget)}</div></div>`;
+}
+function renderPlans(){
+  $('plansGrid').innerHTML=CONFIG.plans.map(p=>`<div class="card plan ${p.recommended?'recommended':''}">${p.recommended?'<div class="ribbon">POPULAR</div>':''}<h2>${p.name}</h2><p class="muted">${p.desc}</p><div class="price">₹${fmt(p.price)}<span style="font-size:13px;color:#7891aa">/month</span></div><ul>${p.features.map(f=>'<li>'+esc(f)+'</li>').join('')}</ul><button class="btn ${state.user?.plan===p.id?'good':'primary'}" onclick="selectPlan('${p.id}')">${state.user?.plan===p.id?'Current plan':'Select plan'}</button></div>`).join('');
+}
+function selectPlan(id){
+  if(!state.user)return;
+  state.user.plan=id;const us=getUsers(),i=us.findIndex(u=>u.id===state.user.id);if(i>=0)us[i].plan=id;setUsers(us);saveState();$('topPlan').textContent=id.toUpperCase();renderPlans();logAction('Plan changed',id);toast('Plan selected locally.');
+}
+function renderActivity(){
+  $('activityBody').innerHTML=state.activity.length?state.activity.map(x=>`<tr><td>${new Date(x.time).toLocaleString('en-IN')}</td><td>${esc(x.action)}</td><td>${esc(x.details)}</td></tr>`).join(''):'<tr><td colspan="3"><div class="empty">No activity yet.</div></td></tr>';
+}
+function clearActivity(){state.activity=[];saveState();renderActivity();toast('Activity cleared.')}
+function renderNotifications(){
+  const ns=state.notifications.length?state.notifications:[{title:'Ready',body:'Click Connect YouTube to pull real metrics directly from Google API.',time:new Date().toISOString()}];
+  $('notificationsList').innerHTML=ns.map(n=>`<div class="card"><b>${esc(n.title)}</b><p class="muted">${esc(n.body)}</p><small class="muted">${new Date(n.time).toLocaleString('en-IN')}</small></div>`).join('');
+}
+function renderCustomers(){
+  const users=getUsers();$('customersBody').innerHTML=users.length?users.map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${esc(u.plan||'basic')}</td><td>${esc(u.role||'customer')}</td><td>${new Date(u.createdAt).toLocaleDateString('en-IN')}</td></tr>`).join(''):'<tr><td colspan="5"><div class="empty">No local customers.</div></td></tr>';
+}
+function renderUsers(){
+  $('rolesList').innerHTML=getUsers().map(u=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)"><div><b>${esc(u.name)}</b><div class="muted">${esc(u.email)}</div></div><span class="status">${esc(u.role||'customer')}</span></div>`).join('')||'<div class="empty">No users.</div>';
+}
+function renderAdmin(){
+  const us=getUsers(),cs=state.campaigns,connected=state.youtube?1:0;
+  $('adminUsers').textContent=us.length;$('adminCampaigns').textContent=cs.length;$('adminConnected').textContent=connected;
+}
+function renderReport(){
+  const safe={generatedAt:new Date().toISOString(),user:state.user?{name:state.user.name,plan:state.user.plan}:null,youtube:state.youtube||null,campaigns:state.campaigns.filter(c=>c.userId===state.user?.id)};
+  $('reportPreview').textContent=JSON.stringify(safe,null,2);
+}
+function exportReport(){
+  const data=$('reportPreview').textContent||'{}';const blob=new Blob([data],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='creatorflow-report.json';a.click();URL.revokeObjectURL(a.href);logAction('Report exported');
+}
+
+let previewCount = 50;
+
+function getYouTubeId(url){
+  try{
+    const u = new URL(url);
+    if(u.hostname === 'youtu.be') return u.pathname.slice(1).split('/')[0];
+    if(u.searchParams.get('v')) return u.searchParams.get('v');
+    const parts = u.pathname.split('/');
+    const idx = parts.indexOf('embed');
+    if(idx >= 0 && parts[idx+1]) return parts[idx+1];
+    const shorts = parts.indexOf('shorts');
+    if(shorts >= 0 && parts[shorts+1]) return parts[shorts+1];
+  }catch(e){}
+  return null;
+}
+
+function setPreviewCount(n){
+  previewCount = Math.max(1,Math.min(100,Number(n)||50));
+  renderScreenWall();
+}
+
+function loadPreviewVideo(){
+  const url = $('previewUrl').value.trim();
+  const id = getYouTubeId(url);
+  if(!id) return toast('Please enter a valid YouTube video URL.');
+  localStorage.setItem('cf_preview_url',url);
+  renderScreenWall();
+  logAction('Preview loaded','YouTube video ID: '+id);
+  toast('Preview wall loaded.');
+}
+
+function clearPreview(){
+  localStorage.removeItem('cf_preview_url');
+  $('previewUrl').value='';
+  renderScreenWall();
+}
+
+function renderScreenWall(){
+  const wall=$('screenWall');
+  if(!wall)return;
+  const url=localStorage.getItem('cf_preview_url')||'';
+  const id=getYouTubeId(url);
+  if(!id){
+    wall.innerHTML='<div class="empty" style="grid-column:1/-1">Paste a YouTube link above, then click Load Video.</div>';
+    return;
+  }
+
+  const embed='https://www.youtube.com/embed/'+encodeURIComponent(id)+'?rel=0&modestbranding=1';
+  let out='';
+  for(let i=1;i<=previewCount;i++){
+    out += `<div style="background:#081522;border:1px solid #1d314a;border-radius:12px;overflow:hidden">
+      <div style="padding:7px 9px;font-size:11px;color:#7891aa;display:flex;justify-content:space-between">
+        <span>Screen ${i}</span><span>Preview</span>
+      </div>
+      <div style="aspect-ratio:16/9;background:#02070d">
+        <iframe
+          title="YouTube preview screen ${i}"
+          src="${embed}"
+          style="width:100%;height:100%;border:0"
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen></iframe>
+      </div>
+    </div>`;
+  }
+  wall.innerHTML=out;
+}
+
+const oldRenderPage = renderPage;
+renderPage = function(page){
+  oldRenderPage(page);
+  if(page==='preview'){
+    $('previewUrl').value=localStorage.getItem('cf_preview_url')||'';
+    renderScreenWall();
+  }
+};
+
+loadState();
+if(state.user || accessToken) enterApp();
+else showLogin();
+</script>
+</body>
+</html>
